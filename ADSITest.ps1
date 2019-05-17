@@ -42,6 +42,7 @@ function Execute(){
     $Search.Filter = $LDAPFilter
 
     $Search.PropertiesToLoad.Clear() | Out-Null
+    # Add any properties you want to load.
     $Search.PropertiesToLoad.Add("description") | Out-Null
     $Search.PropertiesToLoad.Add("displayName") | Out-Null
     $Search.PropertiesToLoad.Add("name") | Out-Null
