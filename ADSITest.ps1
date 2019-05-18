@@ -8,6 +8,7 @@ Param(
     [Parameter(Mandatory=$true)][String]$SearchRootDN,
     [Parameter(Mandatory=$false)][String]$LDAPFilter = "(objectClass=*)",
     [Parameter(Mandatory=$false)][object]$PropertiesToLoad = @("description","displayName","name","objectClass","objectGUID","objectSid","whenChanged","whenCreated","edsvaNamingContextDN","distinguishedName"),
+    [Parameter(Mandatory=$false)][switch]$LogPropertyValues,
     [Parameter(Mandatory=$false)][String]$LogFile = "C:\Temp\ADSITest.log",
     [Parameter(Mandatory=$false)][Switch]$ShowLog,
     [Parameter(Mandatory=$false)][pscredential]$Credential
@@ -30,6 +31,7 @@ function WriteProgress($currentCount, $totalCount){
 
 function Main(){
     WriteLog "[INFO]" "-------------------------BEGIN-------------------------"
+    
     if ($EDMS){
         if ($Credential){
             $RootDirectory = New-Object DirectoryEntry("EDMS://$HostFQDN/$SearchRootDN", $Credential.UserName, $Credential.GetNetworkCredential().Password)
@@ -46,17 +48,21 @@ function Main(){
         return
     }
 
-
-    if (!$RootDirectory.Username){
+    if (!$RootDirectory.DistinguishedName){
         WriteLog "[ERROR]" "Access Denied"
         return
     }
 
-    WriteLog "[INFO]" ("Logged in as: " + $RootDirectory.Username)
+    if ($Credential){
+        WriteLog "[INFO]" ("Logged in as: " + $RootDirectory.Username)
+    } else {
+        WriteLog "[INFO]" ("Logged in as: " + ([Security.Principal.WindowsIdentity]::GetCurrent().Name))
+    }
+    
     WriteLog "[ADSI]" $RootDirectory.Path
 
     WriteLog "[FILTER]" $LDAPFilter
-    $Search = [DirectorySearcher]($RootDirectory)
+    $Search = New-Object DirectorySearcher($RootDirectory)
 
     if ($EDMS){
         $Search.PageSize = 0
@@ -101,6 +107,11 @@ function Main(){
         try {
             $TempObject = $Object.GetDirectoryEntry()
             WriteLog "       \_____[SUCCESS]" $TempObject.distinguishedName
+            if ($LogPropertyValues){
+                foreach($prop in $PropertiesToLoad){
+                    WriteLog "           \_____[PROPERTY]" ($prop + " : " + $Object.Properties.($prop.toLower()))
+                }
+            }
             $TempObject.Dispose()
         } catch {
             WriteLog "       \_____[ERROR]" $_
