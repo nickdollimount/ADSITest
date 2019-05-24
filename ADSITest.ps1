@@ -7,7 +7,7 @@ Param(
     [Parameter(Mandatory=$true)][String]$HostFQDN,
     [Parameter(Mandatory=$true)][String]$SearchRootDN,
     [Parameter(Mandatory=$false)][String]$LDAPFilter = "(objectClass=*)",
-    [Parameter(Mandatory=$false)][object]$PropertiesToLoad = @("description","displayName","name","objectClass","objectGUID","objectSid","whenChanged","whenCreated","edsvaNamingContextDN","distinguishedName"),
+    [Parameter(Mandatory=$false)][object]$PropertiesToLoad = @("description","displayName","name","objectClass","objectGUID","objectSid","whenChanged","whenCreated","distinguishedName"),
     [Parameter(Mandatory=$false)][switch]$LogPropertyValues,
     [Parameter(Mandatory=$false)][String]$LogFile = "C:\Temp\ADSITest.log",
     [Parameter(Mandatory=$false)][Switch]$ShowLog,
@@ -48,7 +48,7 @@ function Main(){
         return
     }
 
-    if (!$RootDirectory.DistinguishedName){
+    if (!$RootDirectory){
         WriteLog "[ERROR]" "Access Denied"
         return
     }
@@ -82,7 +82,10 @@ function Main(){
     WriteLog "[INFO]" "Querying directory..."
     try {
         $Collection = $Search.FindAll()
-        
+        $LifetimeService = $Collection.InitializeLifetimeService()
+        $Timespan = New-Object Timespan(10,0,0)
+        $LifetimeService.Renew($Timespan) | Out-Null
+        WriteLog "[INFO]" ("Lease time: " + $LifetimeService.CurrentLeaseTime)
     } catch {
         WriteLog "[ERROR]" $_
         if ($EDMS){
@@ -98,26 +101,32 @@ function Main(){
     $totalCount = $Collection.Count
     $currentCount = 1
 
-    foreach($Object in $Collection){
-        WriteLog "[DIRECTORY OBJECT]" $Object.Path
+    try{
+        foreach($Object in $Collection){
+            WriteLog "[DIRECTORY OBJECT]" $Object.Path
 
-        WriteProgress $currentCount $totalCount
-        $currentCount++
+            WriteProgress $currentCount $totalCount
+            $currentCount++
 
-        try {
-            $TempObject = $Object.GetDirectoryEntry()
-            WriteLog "       \_____[SUCCESS]" $TempObject.distinguishedName
-            if ($LogPropertyValues){
-                foreach($prop in $PropertiesToLoad){
-                    WriteLog "           \_____[PROPERTY]" ($prop + " : " + $Object.Properties.($prop.toLower()))
+            try {
+                $DirectoryEntry = $Object.GetDirectoryEntry()
+                WriteLog "       \_____[SUCCESS]" $DirectoryEntry.distinguishedName
+                if ($LogPropertyValues){
+                    foreach($prop in $PropertiesToLoad){
+                        WriteLog "           \_____[PROPERTY]" ($prop + " : " + $Object.Properties.($prop.toLower()))
+                    }
                 }
+                $DirectoryEntry.Dispose()
+            } catch {
+                WriteLog "       \_____[ERROR]" $_
+                $_
             }
-            $TempObject.Dispose()
-        } catch {
-            WriteLog "       \_____[ERROR]" $_
-            $_
         }
+    } catch {
+        WriteLog "       \_____[ERROR]" $_
+        $_
     }
+    
 
     $RootDirectory.Dispose()
     $Search.Dispose()
