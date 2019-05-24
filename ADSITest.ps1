@@ -49,7 +49,7 @@ function Main(){
     }
 
     if (!$RootDirectory){
-        WriteLog "[ERROR]" "Access Denied"
+        WriteLog "[ERROR]" "Unable to connect."
         return
     }
 
