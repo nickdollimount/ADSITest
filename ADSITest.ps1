@@ -125,7 +125,7 @@ function Main(){
         $_
     }
     
-
+    $Collection.Dispose()
     $RootDirectory.Dispose()
     $Search.Dispose()
     WriteLog "[INFO]" "Getting directory entries COMPLETE."
