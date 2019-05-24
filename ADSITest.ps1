@@ -109,14 +109,12 @@ function Main(){
             $currentCount++
 
             try {
-                $DirectoryEntry = $Object.GetDirectoryEntry()
-                WriteLog "       \_____[SUCCESS]" $DirectoryEntry.distinguishedName
+                WriteLog "       \_____[SUCCESS]" ""
                 if ($LogPropertyValues){
                     foreach($prop in $PropertiesToLoad){
                         WriteLog "           \_____[PROPERTY]" ($prop + " : " + $Object.Properties.($prop.toLower()))
                     }
                 }
-                $DirectoryEntry.Dispose()
             } catch {
                 WriteLog "       \_____[ERROR]" $_
                 $_
