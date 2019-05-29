@@ -11,6 +11,7 @@ Param(
     [Parameter(Mandatory=$false)][switch]$LogPropertyValues,
     [Parameter(Mandatory=$false)][String]$LogFile = "C:\Temp\ADSITest.log",
     [Parameter(Mandatory=$false)][Switch]$ShowLog,
+    [Parameter(Mandatory=$false)][int]$LifetimeServiceHours = 0,
     [Parameter(Mandatory=$false)][pscredential]$Credential
     
 )
@@ -82,10 +83,12 @@ function Main(){
     WriteLog "[INFO]" "Querying directory..."
     try {
         $Collection = $Search.FindAll()
-        $LifetimeService = $Collection.InitializeLifetimeService()
-        $Timespan = New-Object Timespan(10,0,0)
-        $LifetimeService.Renew($Timespan) | Out-Null
-        WriteLog "[INFO]" ("Lease time: " + $LifetimeService.CurrentLeaseTime)
+        if ($LifetimeServiceHours -gt 0){
+            $LifetimeService = $Collection.InitializeLifetimeService()
+            $Timespan = New-Object Timespan($LifetimeServiceHours,0,0)
+            $LifetimeService.Renew($Timespan) | Out-Null
+            WriteLog "[INFO]" ("Lease time: " + $LifetimeService.CurrentLeaseTime)
+        }
     } catch {
         WriteLog "[ERROR]" $_
         if ($EDMS){
