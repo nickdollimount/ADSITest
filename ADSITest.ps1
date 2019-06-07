@@ -114,8 +114,10 @@ function Main(){
             try {
                 WriteLog "       \_____[SUCCESS]" ""
                 if ($LogPropertyValues){
+                    WriteLog "           \_____[PROPERTIES]"
                     foreach($prop in $PropertiesToLoad){
-                        WriteLog "           \_____[PROPERTY]" ($prop + " : " + $Object.Properties.($prop.toLower()))
+                        WriteLog "              \_____[NAME]" $prop
+                        WriteLog "                |_____[VALUE]" $Object.Properties.($prop.toLower())
                     }
                 }
             } catch {
